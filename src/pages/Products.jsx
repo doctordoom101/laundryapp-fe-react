@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import ProductForm from "@/components/ProductForm"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { productService } from "../api/services"
 import useAuthStore from "../stores/authStore"
 
@@ -15,6 +17,8 @@ const Products = () => {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [open, setOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
 
   useEffect(() => {
     fetchProducts()
@@ -31,6 +35,16 @@ const Products = () => {
       setLoading(false)
     }
   }
+
+  const handleDelete = async (productId) => {
+    if (!confirm("Are you sure you want to delete this outlet?")) return
+    try {
+      await productService.deleteProduct(productId)
+      fetchProducts()
+    } catch (error) {
+      console.error("Error deleting outlet:", error)
+    }
+  }  
 
   const getTypeBadge = (type) => {
     const typeConfig = {
@@ -58,10 +72,36 @@ const Products = () => {
           <p className="text-muted-foreground">Manage laundry services and pricing</p>
         </div>
         {canManageProducts && (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => {
+                  setEditingProduct(null)
+                  setOpen(true)
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Product
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Product</DialogTitle>
+              </DialogHeader>
+              <ProductForm
+                product={editingProduct}
+                onSuccess={() => {
+                  setOpen(false)
+                  setEditingProduct(null)
+                  fetchProducts()
+                }}
+                onCancel={() => {
+                  setOpen(false)
+                  setEditingProduct(null)
+                }}
+              />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -124,10 +164,15 @@ const Products = () => {
                       {canManageProducts && (
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" onClick={() => {
+                              setEditingProduct(product)
+                              setOpen(true)
+                              }}>
                               Edit
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(product.id)}>
                               Delete
                             </Button>
                           </div>

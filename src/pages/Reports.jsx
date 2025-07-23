@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { reportService } from "../api/services"
+import { reportService, outletService } from "../api/services"
+import html2pdf from "html2pdf.js"
 
 const Reports = () => {
   const [outlets, setOutlets] = useState([])
@@ -22,19 +23,27 @@ const Reports = () => {
   const fetchOutlets = async () => {
     try {
       const response = await outletService.getOutlets()
-      setOutlets(response.data)
+      const outletData = response.data.data || response.data || []  // handle berbagai kemungkinan
+      setOutlets(Array.isArray(outletData) ? outletData : [])
     } catch (error) {
       console.error("Failed to fetch outlets:", error)
+      setOutlets([]) // fallback ke array kosong agar tidak error .map
     }
-  }  
+  }
 
   const fetchReport = async () => {
     try {
       setLoading(true)
-      const response = await reportService.getReports(filters)
+      console.log('Filters being sent:', filters) // Debug
+      const response = await reportService.getReports({
+        ...filters,
+        outlet_id: filters.outlet_id === 'all' ? undefined : filters.outlet_id,
+      })
+      console.log('API Response:', response) // Debug
       setReportData(response.data)
     } catch (error) {
       console.error("Error fetching report:", error)
+      setReportData(null)
     } finally {
       setLoading(false)
     }
@@ -56,6 +65,21 @@ const Reports = () => {
     fetchReport()
   }
 
+  const handleExportPdf = () => {
+    const element = document.getElementById("report-section")
+    if (!element) return
+  
+  const options = {
+      margin:       0.5,
+      filename:     `report-${filters.type}-${filters.date}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+    }
+  
+    html2pdf().set(options).from(element).save()
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -63,7 +87,7 @@ const Reports = () => {
           <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
           <p className="text-muted-foreground">Generate and view business reports</p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleExportPdf}>
           <Download className="mr-2 h-4 w-4" />
           Export PDF
         </Button>
@@ -130,7 +154,7 @@ const Reports = () => {
 
       {/* Report Results */}
       {reportData && (
-        <>
+        <div id="report-section" className="space-y-6 mt-6">
           {/* Statistics Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
@@ -219,7 +243,7 @@ const Reports = () => {
               </div>
             </CardContent>
           </Card>
-        </>
+        </div>
       )}
     </div>
   )

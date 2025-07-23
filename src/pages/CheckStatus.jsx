@@ -108,6 +108,7 @@ const CheckStatus = () => {
                   <div className="space-y-1 text-sm">
                     <p><span className="font-medium">Name:</span> {result.customer_name}</p>
                     <p><span className="font-medium">Service:</span> {result.service}</p>
+                    <p><span className="font-medium">Notes:</span> {result.notes}</p>
                     <p><span className="font-medium">Date:</span> {new Date(result.created_at).toLocaleDateString("id-ID")}</p>
                   </div>
                 </div>

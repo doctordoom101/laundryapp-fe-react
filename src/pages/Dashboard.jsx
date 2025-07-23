@@ -12,7 +12,7 @@ const Dashboard = () => {
   const { user } = useAuthStore()
   const [stats, setStats] = useState({
     totalItems: 0,
-    totalRevenue: 0,
+    totalPaid: 0,
     pendingItems: 0,
     completedItems: 0,
   })
@@ -47,7 +47,7 @@ const Dashboard = () => {
   
       // Hitung statistik
       const totalItems = items.length
-      const totalRevenue = transactions.reduce((sum, trx) => sum + Number(trx.amount || 0), 0)
+      const totalPaid = transactions.reduce((sum, trx) => sum + Number(trx.amount || 0), 0)
       const pendingItems = items.filter(
         (item) => item.process_status === "antri" || item.process_status === "proses"
       ).length
@@ -55,7 +55,7 @@ const Dashboard = () => {
   
       setStats({
         totalItems,
-        totalRevenue,
+        totalPaid,
         pendingItems,
         completedItems,
       })
@@ -148,11 +148,11 @@ const Dashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rp {stats.totalRevenue.toLocaleString("id-ID")}</div>
+            <div className="text-2xl font-bold">Rp {stats.totalPaid.toLocaleString("id-ID")}</div>
             <p className="text-xs text-muted-foreground">Total earnings</p>
           </CardContent>
         </Card>

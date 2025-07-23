@@ -232,10 +232,10 @@ const LaundryItems = () => {
               <Select value={dateFilter} onValueChange={setDateFilter}>
                 <SelectTrigger><SelectValue placeholder="Filter Date" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Tanggal</SelectItem>
-                  <SelectItem value="today">Hari Ini</SelectItem>
-                  <SelectItem value="yesterday">Kemarin</SelectItem>
-                  <SelectItem value="custom">Pilih Tanggal</SelectItem>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
+                  <SelectItem value="custom">Custome Date</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -359,20 +359,14 @@ const LaundryItems = () => {
                                       <div className="space-y-3">
                                         <div>
                                           <p className="text-sm font-medium mb-1">Process Status:</p>
-                                          <Badge variant={getStatusBadge(selectedItem.process_status).variant}>
-                                            {getStatusBadge(selectedItem.process_status).label}
-                                          </Badge>
                                           <p className="text-xs text-muted-foreground mt-1">
-                                            {getStatusBadge(selectedItem.process_status).description}
+                                            {getStatusBadge(selectedItem.process_status)}
                                           </p>
                                         </div>
                                         <div>
                                           <p className="text-sm font-medium mb-1">Payment Status:</p>
-                                          <Badge variant={getPaymentBadge(selectedItem.payment_status).variant}>
-                                            {getPaymentBadge(selectedItem.payment_status).label}
-                                          </Badge>
                                           <p className="text-xs text-muted-foreground mt-1">
-                                            {getPaymentBadge(selectedItem.payment_status).description}
+                                            {getPaymentBadge(selectedItem.payment_status)}
                                           </p>
                                         </div>
                                       </div>

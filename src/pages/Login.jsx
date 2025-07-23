@@ -1,13 +1,12 @@
 "use client"
-
 import { useState } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation, Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ShirtIcon, Loader2 } from "lucide-react"
+import { ShirtIcon, Loader2, Search } from "lucide-react"
 import useAuthStore from "../stores/authStore"
 
 const Login = () => {
@@ -16,17 +15,14 @@ const Login = () => {
     password: "",
   })
   const [error, setError] = useState("")
-
   const { login, isLoading } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
-
   const from = location.state?.from?.pathname || "/"
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
-
     try {
       await login(credentials)
       navigate(from, { replace: true })
@@ -51,7 +47,7 @@ const Login = () => {
               <ShirtIcon className="h-6 w-6" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Sign in</CardTitle>
+          <CardTitle className="text-2xl text-center">Sign in Laundry Staffs</CardTitle>
           <CardDescription className="text-center">
             Enter your credentials to access the laundry management system
           </CardDescription>
@@ -63,7 +59,6 @@ const Login = () => {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
@@ -76,7 +71,6 @@ const Login = () => {
                 placeholder="Enter your username"
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -89,12 +83,31 @@ const Login = () => {
                 placeholder="Enter your password"
               />
             </div>
-
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign in
             </Button>
           </form>
+
+          {/* Status Check Link */}
+          <div className="mt-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or
+                </span>
+              </div>
+            </div>
+            <Link to="/check-status" className="mt-4 block">
+              <Button variant="outline" className="w-full">
+                <Search className="mr-2 h-4 w-4" />
+                Check Your Laundry Status
+              </Button>
+            </Link>
+          </div>
 
           <div className="mt-6 text-center text-sm text-gray-600">
             <p>Demo accounts:</p>
