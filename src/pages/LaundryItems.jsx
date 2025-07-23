@@ -15,6 +15,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from "@/components/ui/select"
 import { LaundryItemForm } from "../components/LaundryItemForm"
 import { laundryService } from "../api/services"
 import useAuthStore from "../stores/authStore"
@@ -26,6 +39,10 @@ const LaundryItems = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [paymentFilter, setPaymentFilter] = useState("all")
+  const [dateFilter, setDateFilter] = useState("all") // "all" | "today" | "yesterday" | "custom"
+  const [customDate, setCustomDate] = useState(null)
 
   useEffect(() => {
     fetchItems()
@@ -54,33 +71,86 @@ const LaundryItems = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      antri: { label: "Queue", variant: "secondary" },
-      proses: { label: "Processing", variant: "default" },
-      selesai: { label: "Completed", variant: "success" },
+      antri: {
+        label: "Queue",
+        base: "bg-yellow-100 text-yellow-700 border-yellow-300",
+        hover: "hover:bg-yellow-200 hover:text-yellow-800",
+      },
+      proses: {
+        label: "Processing",
+        base: "bg-blue-100 text-blue-700 border-blue-300",
+        hover: "hover:bg-blue-200 hover:text-blue-800",
+      },
+      selesai: {
+        label: "Completed",
+        base: "bg-green-100 text-green-700 border-green-300",
+        hover: "hover:bg-green-200 hover:text-green-800",
+      },
     }
-
-    const config = statusConfig[status] || { label: status, variant: "secondary" }
-    return <Badge variant={config.variant}>{config.label}</Badge>
+  
+    const config = statusConfig[status] || {
+      label: status,
+      base: "bg-gray-100 text-gray-700 border-gray-300",
+      hover: "hover:bg-gray-200 hover:text-gray-800",
+    }
+  
+    return (
+      <button
+        type="button"
+        className={`text-xs font-semibold px-2.5 py-1 border rounded-full transition-colors duration-150 ${config.base} ${config.hover}`}
+      >
+        {config.label}
+      </button>
+    )
   }
 
   const getPaymentBadge = (status) => {
     const statusConfig = {
-      belum_bayar: { label: "Unpaid", variant: "destructive" },
-      dp: { label: "Partial", variant: "secondary" },
-      lunas: { label: "Paid", variant: "success" },
+      belum_bayar: { label: "Unpaid", color: "text-red-600" },
+      dp: { label: "Partial", color: "text-yellow-600" },
+      lunas: { label: "Paid", color: "text-green-600" },
     }
 
-    const config = statusConfig[status] || { label: status, variant: "secondary" }
-    return <Badge variant={config.variant}>{config.label}</Badge>
+    const config = statusConfig[status] || { label: status, color: "text-gray-500" }
+
+    return (
+      <span className={`font-semibold text-sm ${config.color}`}>
+        {config.label}
+      </span>
+    )
   }
 
-  const filteredItems = items.filter(
-    (item) =>
-      item.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.service?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  // const filteredItems = items.filter(
+  //   (item) =>
+  //     item.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     item.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     item.service?.toLowerCase().includes(searchTerm.toLowerCase()),
+  // )
 
+  const filteredItems = items.filter((item) => {
+    const statusMatch = statusFilter === "all" || item.process_status === statusFilter
+    const paymentMatch = paymentFilter === "all" || item.payment_status === paymentFilter
+  
+    const createdDate = new Date(item.created_at)
+    let dateMatch = true
+  
+    if (dateFilter === "today") {
+      const today = new Date()
+      dateMatch =
+        createdDate.toDateString() === today.toDateString()
+    } else if (dateFilter === "yesterday") {
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      dateMatch =
+        createdDate.toDateString() === yesterday.toDateString()
+    } else if (dateFilter === "custom" && customDate) {
+      dateMatch =
+        createdDate.toISOString().split("T")[0] === customDate
+    }
+  
+    return statusMatch && paymentMatch && dateMatch
+  })
+  
   const canCreateItems = user?.role === "admin" || user?.role === "petugas"
 
   return (
@@ -117,6 +187,7 @@ const LaundryItems = () => {
 
       {/* Search and Filters */}
       <Card>
+
         <CardHeader>
           <CardTitle>Search & Filter</CardTitle>
         </CardHeader>
@@ -133,10 +204,49 @@ const LaundryItems = () => {
                 />
               </div>
             </div>
-            <Button variant="outline">
+            {/* <Button variant="outline">
               <Filter className="mr-2 h-4 w-4" />
               Filter
-            </Button>
+            </Button> */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger><SelectValue placeholder="Filter Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="antri">Antri</SelectItem>
+                  <SelectItem value="proses">Proses</SelectItem>
+                  <SelectItem value="selesai">Selesai</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                <SelectTrigger><SelectValue placeholder="Filter Payment" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Payment</SelectItem>
+                  <SelectItem value="belum_bayar">Belum Bayar</SelectItem>
+                  <SelectItem value="dp">DP</SelectItem>
+                  <SelectItem value="lunas">Lunas</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger><SelectValue placeholder="Filter Date" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Tanggal</SelectItem>
+                  <SelectItem value="today">Hari Ini</SelectItem>
+                  <SelectItem value="yesterday">Kemarin</SelectItem>
+                  <SelectItem value="custom">Pilih Tanggal</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {dateFilter === "custom" && (
+                <Input
+                  type="date"
+                  value={customDate || ""}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                />
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -164,6 +274,7 @@ const LaundryItems = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Payment</TableHead>
                   <TableHead>Actions</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -186,13 +297,93 @@ const LaundryItems = () => {
                       <TableCell>{item.service}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
                       <TableCell>Rp {item.total_price?.toLocaleString("id-ID")}</TableCell>
-                      <TableCell>{getStatusBadge(item.process_status)}</TableCell>
-                      <TableCell>{getPaymentBadge(item.payment_status)}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <div className="cursor-pointer inline-block">
+                              {getStatusBadge(item.process_status)}
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            {["antri", "proses", "selesai"].map((status) => (
+                              <DropdownMenuItem
+                                key={status}
+                                onClick={() => handleStatusUpdate(item.id, status)}
+                              >
+                                {getStatusBadge(status)}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                      <TableCell>
+                        {getPaymentBadge(item.payment_status)}
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedItem(item)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+
+                          <DialogContent className="max-w-3xl">
+                            {selectedItem && (
+                              <Card>
+                                <CardHeader>
+                                  <CardTitle>Laundry Status</CardTitle>
+                                  <CardDescription>Status for code: {selectedItem.code}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <h3 className="font-semibold mb-2">Customer Information</h3>
+                                      <div className="space-y-1 text-sm">
+                                        <p><span className="font-medium">Name:</span> {selectedItem.customer_name}</p>
+                                        <p><span className="font-medium">Service:</span> {selectedItem.service}</p>
+                                        <p><span className="font-medium">Date:</span> {new Date(selectedItem.created_at).toLocaleDateString("id-ID")}</p>
+                                      
+                                        {selectedItem.notes && (
+                                          <p><span className="font-medium">Notes:</span> {selectedItem.notes}</p>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <h3 className="font-semibold mb-2">Status Information</h3>
+                                      <div className="space-y-3">
+                                        <div>
+                                          <p className="text-sm font-medium mb-1">Process Status:</p>
+                                          <Badge variant={getStatusBadge(selectedItem.process_status).variant}>
+                                            {getStatusBadge(selectedItem.process_status).label}
+                                          </Badge>
+                                          <p className="text-xs text-muted-foreground mt-1">
+                                            {getStatusBadge(selectedItem.process_status).description}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <p className="text-sm font-medium mb-1">Payment Status:</p>
+                                          <Badge variant={getPaymentBadge(selectedItem.payment_status).variant}>
+                                            {getPaymentBadge(selectedItem.payment_status).label}
+                                          </Badge>
+                                          <p className="text-xs text-muted-foreground mt-1">
+                                            {getPaymentBadge(selectedItem.payment_status).description}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+
                           {canCreateItems && (
                             <>
                               <Button variant="ghost" size="sm">
@@ -207,6 +398,7 @@ const LaundryItems = () => {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell>{new Date(item.created_at).toISOString().split("T")[0]}</TableCell>
                     </TableRow>
                   ))
                 )}

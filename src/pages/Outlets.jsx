@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import OutletForm from "@/components/OutletForm" 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { outletService } from "../api/services"
 import useAuthStore from "../stores/authStore"
 
@@ -14,6 +16,8 @@ const Outlets = () => {
   const [outlets, setOutlets] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [open, setOpen] = useState(false)
+  const [editingOutlet, setEditingOutlet] = useState(null)
 
   useEffect(() => {
     fetchOutlets()
@@ -31,6 +35,20 @@ const Outlets = () => {
     }
   }
 
+  const handleEdit = (outlet) => {
+    setEditingOutlet(outlet)
+  }
+  
+  const handleDelete = async (outletId) => {
+    if (!confirm("Are you sure you want to delete this outlet?")) return
+    try {
+      await outletService.deleteOutlet(outletId)
+      fetchOutlets()
+    } catch (error) {
+      console.error("Error deleting outlet:", error)
+    }
+  }  
+
   const filteredOutlets = outlets.filter(
     (outlet) =>
       outlet.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,13 +64,39 @@ const Outlets = () => {
           <h1 className="text-3xl font-bold tracking-tight">Outlets</h1>
           <p className="text-muted-foreground">Manage laundry outlet locations</p>
         </div>
+        {/* create */}
         {canManageOutlets && (
-          <Button>
+          <Button
+            onClick={() => {
+              setEditingOutlet(null)
+              setOpen(true)
+            }}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Outlet
           </Button>
         )}
       </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingOutlet ? "Edit Outlet" : "Add New Outlet"}</DialogTitle>
+          </DialogHeader>
+          <OutletForm
+            outlet={editingOutlet}
+            onSuccess={() => {
+              setOpen(false)
+              fetchOutlets()
+              setEditingOutlet(null)
+            }}
+            onCancel={() => {
+              setOpen(false)
+              setEditingOutlet(null)
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Search */}
       <Card>
@@ -121,10 +165,15 @@ const Outlets = () => {
                       {canManageOutlets && (
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" onClick={() => {
+                              setEditingOutlet(outlet)
+                              setOpen(true)
+                              }}>
                               Edit
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(outlet.id)}>
                               Delete
                             </Button>
                           </div>

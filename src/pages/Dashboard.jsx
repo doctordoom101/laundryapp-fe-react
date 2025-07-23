@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { ShirtIcon, DollarSign, Clock, CheckCircle } from "lucide-react"
 import useAuthStore from "../stores/authStore"
 import { laundryService } from "../api/services"
+import { transactionService } from "../api/services"
 
 const Dashboard = () => {
   const { user } = useAuthStore()
@@ -17,6 +18,7 @@ const Dashboard = () => {
   })
   const [recentItems, setRecentItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [transactions, setTransactions] = useState([])
 
   useEffect(() => {
     fetchDashboardData()
@@ -25,27 +27,32 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
-
+  
       // Fetch recent laundry items
       const itemsResponse = await laundryService.getLaundryItems({
         page: 1,
         per_page: 5,
       })
       setRecentItems(itemsResponse.data.data || [])
-
-      // Calculate basic stats from items
+  
+      // Fetch all laundry items
       const allItemsResponse = await laundryService.getLaundryItems({
         per_page: 1000,
       })
       const items = allItemsResponse.data.data || []
-
+  
+      // ✅ Fetch transactions (baru)
+      const transactionResponse = await transactionService.getTransactions()
+      const transactions = transactionResponse.data.data || []
+  
+      // Hitung statistik
       const totalItems = items.length
-      const totalRevenue = items.reduce((sum, item) => sum + (item.total_price || 0), 0)
+      const totalRevenue = transactions.reduce((sum, trx) => sum + Number(trx.amount || 0), 0)
       const pendingItems = items.filter(
-        (item) => item.process_status === "antri" || item.process_status === "proses",
+        (item) => item.process_status === "antri" || item.process_status === "proses"
       ).length
       const completedItems = items.filter((item) => item.process_status === "selesai").length
-
+  
       setStats({
         totalItems,
         totalRevenue,
@@ -58,27 +65,57 @@ const Dashboard = () => {
       setLoading(false)
     }
   }
+  
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      antri: { label: "Queue", variant: "secondary" },
-      proses: { label: "Processing", variant: "default" },
-      selesai: { label: "Completed", variant: "success" },
+      antri: {
+        label: "Queue",
+        base: "bg-yellow-100 text-yellow-700 border-yellow-300",
+        hover: "hover:bg-yellow-200 hover:text-yellow-800",
+      },
+      proses: {
+        label: "Processing",
+        base: "bg-blue-100 text-blue-700 border-blue-300",
+        hover: "hover:bg-blue-200 hover:text-blue-800",
+      },
+      selesai: {
+        label: "Completed",
+        base: "bg-green-100 text-green-700 border-green-300",
+        hover: "hover:bg-green-200 hover:text-green-800",
+      },
     }
-
-    const config = statusConfig[status] || { label: status, variant: "secondary" }
-    return <Badge variant={config.variant}>{config.label}</Badge>
+  
+    const config = statusConfig[status] || {
+      label: status,
+      base: "bg-gray-100 text-gray-700 border-gray-300",
+      hover: "hover:bg-gray-200 hover:text-gray-800",
+    }
+  
+    return (
+      <button
+        type="button"
+        className={`text-xs font-semibold px-2.5 py-1 border rounded-full transition-colors duration-150 ${config.base} ${config.hover}`}
+      >
+        {config.label}
+      </button>
+    )
   }
 
   const getPaymentBadge = (status) => {
     const statusConfig = {
-      belum_bayar: { label: "Unpaid", variant: "destructive" },
-      dp: { label: "Partial", variant: "secondary" },
-      lunas: { label: "Paid", variant: "success" },
+      belum_bayar: { label: "Unpaid", color: "text-red-600" },
+      dp: { label: "Partial", color: "text-yellow-600" },
+      lunas: { label: "Paid", color: "text-green-600" },
     }
 
-    const config = statusConfig[status] || { label: status, variant: "secondary" }
-    return <Badge variant={config.variant}>{config.label}</Badge>
+    const config = statusConfig[status] || { label: status, color: "text-gray-500" }
+
+    return (
+      <span className={`font-semibold text-sm ${config.color}`}>
+        {config.label}
+      </span>
+    )
   }
 
   if (loading) {

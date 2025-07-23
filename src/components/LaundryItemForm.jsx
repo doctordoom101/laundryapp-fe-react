@@ -119,7 +119,7 @@ export const LaundryItemForm = ({ onSuccess, onCancel, item = null }) => {
             <SelectContent>
               {products.map((product) => (
                 <SelectItem key={product.id} value={product.id.toString()}>
-                  {product.name} - Rp {product.price.toLocaleString("id-ID")} ({product.type})
+                  {product.name} - Rp {product.price.toLocaleString("id-ID")} ({product.type}) | {product.outlet}
                 </SelectItem>
               ))}
             </SelectContent>

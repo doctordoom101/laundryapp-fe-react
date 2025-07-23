@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { reportService } from "../api/services"
 
 const Reports = () => {
+  const [outlets, setOutlets] = useState([])
   const [reportData, setReportData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({
@@ -17,6 +18,15 @@ const Reports = () => {
     date: new Date().toISOString().split("T")[0],
     outlet_id: "all", // Updated default value to 'all'
   })
+
+  const fetchOutlets = async () => {
+    try {
+      const response = await outletService.getOutlets()
+      setOutlets(response.data)
+    } catch (error) {
+      console.error("Failed to fetch outlets:", error)
+    }
+  }  
 
   const fetchReport = async () => {
     try {
@@ -32,7 +42,8 @@ const Reports = () => {
 
   useEffect(() => {
     fetchReport()
-  }, [])
+    fetchOutlets()
+  }, [filters])
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({
@@ -98,7 +109,11 @@ const Reports = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Outlets</SelectItem>
-                  {/* Add outlet options here */}
+                  {outlets.map((outlet) => (
+                    <SelectItem key={outlet.id} value={String(outlet.id)}>
+                      {outlet.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -192,9 +207,9 @@ const Reports = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">Rp {item.total_price?.toLocaleString("id-ID")}</p>
+                          <p className="font-medium">Rp {Number(item.total_price).toLocaleString("id-ID")}</p>
                           <p className="text-sm text-muted-foreground">
-                            Paid: Rp {item.paid_amount?.toLocaleString("id-ID")}
+                            Paid: Rp {Number(item.paid_amount).toLocaleString("id-ID")}
                           </p>
                         </div>
                       </div>

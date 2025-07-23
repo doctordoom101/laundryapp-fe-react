@@ -13,15 +13,21 @@ export function Sidebar({ children, className }) {
   
 
 export function SidebarProvider({ children }) {
-  const [open, setOpen] = useState(true)
-  return (
-    <SidebarContext.Provider value={{ open, setOpen }}>
-      <div className="flex h-screen w-full">
-        {open && <Sidebar>{children[0]}</Sidebar>}
-        <div className="flex flex-col w-full">{children[1]}</div>
-      </div>
-    </SidebarContext.Provider>
-  )
+    const [open, setOpen] = useState(true)
+
+    return (
+      <SidebarContext.Provider value={{ open, setOpen }}>
+        <div className="flex h-screen w-full overflow-hidden">
+          {/* Sidebar tetap diam */}
+          {open && <Sidebar className="shrink-0" >{children[0]}</Sidebar>}
+  
+          {/* Konten kanan bisa scroll */}
+          <div className="flex-1 overflow-y-auto">
+            {children[1]}
+          </div>
+        </div>
+      </SidebarContext.Provider>
+    )
 }
 
 export function SidebarTrigger({ className }) {

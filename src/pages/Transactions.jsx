@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { transactionService } from "../api/services"
+import { TransactionForm } from "@/components/TransactionForm" 
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import useAuthStore from "../stores/authStore"
 
 const Transactions = () => {
@@ -15,6 +17,7 @@ const Transactions = () => {
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
     fetchTransactions()
@@ -60,10 +63,23 @@ const Transactions = () => {
           <p className="text-muted-foreground">Manage payment transactions</p>
         </div>
         {canCreateTransactions && (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Transaction
-          </Button>
+          <Dialog open={showForm} onOpenChange={setShowForm}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Transaction
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl">
+              <TransactionForm
+                onSuccess={() => {
+                  setShowForm(false)
+                  fetchTransactions()
+                }}
+                onCancel={() => setShowForm(false)}
+              />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
